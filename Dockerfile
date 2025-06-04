@@ -5,10 +5,10 @@ FROM python:3.10-slim
 RUN pip install flask
 
 # Étape 3 : Définir le répertoire de travail
-WORKDIR /app
+WORKDIR /Flask_Hello_World
 
 # Étape 4 : Copier tous les fichiers dans le conteneur
-COPY . /app
+COPY . . 
 
 # Étape 5 : Exposer le port Flask
 EXPOSE 5000
