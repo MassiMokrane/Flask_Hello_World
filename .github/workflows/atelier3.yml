@@ -19,6 +19,9 @@ jobs:
 
     - name: 🚀 Lancer l'app Flask avec Docker
       run: docker run -d -p 5000:5000 --name flask-server flask-app
+    - name: 🧪 Lancer les tests Pytest
+      run: |
+         docker exec flask-server pytest
 
     - name: 🌐 Installer ngrok h
       run: |
