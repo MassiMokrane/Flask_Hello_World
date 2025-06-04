@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📦 Cloner le repo
+    - name: 📦 Cloner le repos
       uses: actions/checkout@v3
 
     - name: 🐳 Construire l'image Docker
