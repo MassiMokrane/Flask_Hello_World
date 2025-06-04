@@ -5,7 +5,7 @@ RUN pip install flask pytest requests
 # Étape 2 : Installer les dépendances
 RUN pip install flask
 
-# Étape 3 : Définir le répertoire de travails
+# Étape 3 : Définir le répertoire de travaidls
 WORKDIR /Flask_Hello_World
 
 # Étape 4 : Copier tous les fichiers dans le conteneurjvj
