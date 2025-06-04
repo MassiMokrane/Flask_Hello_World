@@ -1,0 +1,37 @@
+name: ATELIER 3 - Preview Flask avec Docker + Ngrok
+
+on:
+  push:
+    branches:
+      - main  # Déclenche à chaque commit/push sur main
+  workflow_dispatch:  # Permet aussi de lancer manuellement
+
+jobs:
+  preview-server:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📦 Cloner le repo
+      uses: actions/checkout@v3
+
+    - name: 🐳 Construire l'image Docker
+      run: docker build -t flask-app .
+
+    - name: 🚀 Lancer l'app Flask avec Docker
+      run: docker run -d -p 5000:5000 --name flask-server flask-app
+
+    - name: 🌐 Installer ngrok
+      run: |
+        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
+        sudo apt update && sudo apt install ngrok
+
+    - name: 🌍 Démarrer ngrok et afficher l'URL publique
+      run: |
+        ngrok http 5000 > ngrok.log &
+        sleep 5
+        echo "🔗 Lien temporaire :"
+        curl http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+
+    - name: ⏳ Attente de 120 secondes
+      run: sleep 120
