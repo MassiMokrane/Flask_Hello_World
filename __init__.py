@@ -29,6 +29,17 @@ def somme(valeur1, valeur2):
         parite = "impair"
 
     return f"<h2>La somme des deux valeurs est : {resultat}</h2><h3>Cette somme est {parite}.</h3>"
+@app.route('/somme_toutes/<valeurs>')
+def somme_toutes(valeurs):
+    # Séparer la chaîne en liste de nombres
+    liste_valeurs = [int(val) for val in valeurs.split(',')]
+
+    # Utilisation d'une boucle pour calculer la somme
+    total = 0
+    for val in liste_valeurs:
+        total += val
+
+    return f"<h2>Les valeurs saisies sont : {liste_valeurs}</h2><h3>La somme de toutes les valeurs est : {total}</h3>"
                                                                                                                
 if __name__ == "__main__":
   app.run(debug=True)
