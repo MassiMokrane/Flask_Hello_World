@@ -7,7 +7,7 @@ RUN pip install flask
 # Étape 3 : Définir le répertoire de travail
 WORKDIR /Flask_Hello_World
 
-# Étape 4 : Copier tous les fichiers dans le conteneur
+# Étape 4 : Copier tous les fichiers dans le conteneurjvj
 COPY . . 
 
 # Étape 5 : Exposer le port Flask
