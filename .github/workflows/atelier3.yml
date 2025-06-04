@@ -1,4 +1,4 @@
-name: ATELIER 3 - Preview Flask avec Docker + Ngrok
+name: ATELIER 3bis - Preview Flask avec Docker + Ngrok + Tests pytest
 
 on:
   push:
@@ -9,44 +9,79 @@ on:
 jobs:
   preview-server:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: 📦 Cloner le repos
-      uses: actions/checkout@v3
-
-    - name: 🐳 Construire l'image Docker
-      run: docker build -t flask-app .
-
-    - name: 🚀 Lancer l'app Flask avec Docker
-      run: docker run -d -p 5000:5000 --name flask-server flask-app
-
-    - name: 🌐 Installer ngrok
-      run: |
-        curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
-        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
-        sudo apt update && sudo apt install ngrok
-
-    - name: 🔐 Authentifier ngrok avec le token
-      run: ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
-
-    - name: 🌍 Démarrer ngrok et afficher l'URL publique
-      run: |
-        ngrok http 5000 > ngrok.log &
-        sleep 5
-        echo "🔗 Lien temporaire :"
-        curl http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-    - name: 🧪 Tester l'API via ngrok avec pytest
-      run: |
-        pip install pytest requests
-        cat <<EOF > test_api.py
-        import requests
-
-          def test_ngrok_access():
-              url = '${{ env.NGROK_URL }}'
-              response = requests.get(url)
-              assert response.status_code == 200
-          EOF
-        pytest test_api.py
-
-    - name: ⏳ Attente de 120 secondes
-      run: sleep 120
+      - name: 📦 Cloner le repos
+        uses: actions/checkout@v3
+      
+      - name: 🐍 Configurer Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: 📚 Installer les dépendances Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests flask
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: 🐳 Construire l'image Docker
+        run: docker build -t flask-app .
+      
+      - name: 🚀 Lancer l'app Flask avec Docker
+        run: docker run -d -p 5000:5000 --name flask-server flask-app
+      
+      - name: ⏳ Attendre que l'app soit prête
+        run: |
+          echo "Attente du démarrage de l'application..."
+          sleep 10
+          # Vérifier que l'app répond localement
+          for i in {1..30}; do
+            if curl -f http://localhost:5000/ >/dev/null 2>&1; then
+              echo "✅ Application démarrée avec succès"
+              break
+            fi
+            echo "Tentative $i/30..."
+            sleep 2
+          done
+      
+      - name: 🌐 Installer ngrok
+        run: |
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
+          sudo apt update && sudo apt install ngrok
+      
+      - name: 🔐 Authentifier ngrok avec le token
+        run: ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
+      
+      - name: 🌍 Démarrer ngrok et récupérer l'URL publique
+        run: |
+          ngrok http 5000 > ngrok.log &
+          sleep 5
+          echo "🔗 Lien temporaire :"
+          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          echo $NGROK_URL
+          echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+      
+      - name: 🧪 Tests pytest - API locale et ngrok
+        run: |
+          echo "🔍 Tests sur l'API locale et publique"
+          export NGROK_URL=${{ env.NGROK_URL }}
+          python -m pytest tests/test_api.py -v
+      
+      - name: 📊 Afficher les logs Docker
+        run: |
+          echo "📋 Logs de l'application Flask :"
+          docker logs flask-server
+      
+      - name: ⏳ Maintenir ngrok actif pour 120 secondes
+        run: |
+          echo "⏰ Maintien du tunnel ngrok pendant 120 secondes..."
+          sleep 120
+      
+      - name: 🧹 Nettoyage
+        if: always()
+        run: |
+          docker stop flask-server || true
+          docker rm flask-server || true
+          pkill ngrok || true
