@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📦 Cloner le repos
+    - name: 📦 Cloner le repo
       uses: actions/checkout@v3
 
     - name: 🐳 Construire l'image Docker
@@ -19,22 +19,38 @@ jobs:
 
     - name: 🚀 Lancer l'app Flask avec Docker
       run: docker run -d -p 5000:5000 --name flask-server flask-app
-  
-    - name: 🌐 Installer ngrok h
+
+    - name: 🌐 Installer ngrok
       run: |
         curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
         echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && \
-        sudo apt update && sudo apt install ngrok
+        sudo apt update && sudo apt install ngrok -y
 
     - name: 🔐 Authentifier ngrok avec le token
       run: ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
 
     - name: 🌍 Démarrer ngrok et afficher l'URL publique
+      id: expose
       run: |
-        ngrok http 5000 > ngrok.log &
+        ngrok http http://localhost:5000 > ngrok.log &
         sleep 5
-        echo "🔗 Lien temporaire :"
-        curl http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+        curl http://localhost:4040/api/tunnels
+        URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+        echo "🔗 Lien temporaire : $URL"
+        echo "NGROK_URL=$URL" >> $GITHUB_ENV
 
-    - name: ⏳ Attente de 120 secondes
+    - name: 🧪 Tester l'API via ngrok avec pytest
+      run: |
+        pip install pytest requests
+        echo "
+import requests
+
+def test_ngrok_access():
+    url = '${{ env.NGROK_URL }}'
+    r = requests.get(url)
+    assert r.status_code == 200
+" > test_api.py
+        pytest test_api.py
+
+    - name: ⏳ Attente de 120 secondes pour accéder manuellement à l'URL
       run: sleep 120
