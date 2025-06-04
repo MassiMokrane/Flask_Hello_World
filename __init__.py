@@ -40,6 +40,18 @@ def somme_toutes(valeurs):
         total += val
 
     return f"<h2>Les valeurs saisies sont : {liste_valeurs}</h2><h3>La somme de toutes les valeurs est : {total}</h3>"
+@app.route('/max_valeurs/<valeurs>')
+def max_valeurs(valeurs):
+    liste_valeurs = [int(val) for val in valeurs.split(',')]
+    
+    # Trouver la valeur maximale manuellement avec boucle et condition
+    max_val = liste_valeurs[0]  # On suppose que le 1er est le max
+    for val in liste_valeurs:
+        if val > max_val:
+            max_val = val
+
+    return f"<h2>Les valeurs saisies sont : {liste_valeurs}</h2><h3>La valeur la plus grande est : {max_val}</h3>"
+
                                                                                                                
 if __name__ == "__main__":
   app.run(debug=True)
