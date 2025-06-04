@@ -1,6 +1,7 @@
 # Étape 1 : Image de base
 FROM python:3.10-slim
-
+# Étape 2 : Installer les dépendances
+RUN pip install flask pytest requests
 # Étape 2 : Installer les dépendances
 RUN pip install flask
 
