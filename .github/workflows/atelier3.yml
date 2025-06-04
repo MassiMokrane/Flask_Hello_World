@@ -34,7 +34,6 @@ jobs:
       run: |
         ngrok http http://localhost:5000 > ngrok.log &
         sleep 5
-        curl http://localhost:4040/api/tunnels
         URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
         echo "🔗 Lien temporaire : $URL"
         echo "NGROK_URL=$URL" >> $GITHUB_ENV
@@ -42,15 +41,12 @@ jobs:
     - name: 🧪 Tester l'API via ngrok avec pytest
       run: |
         pip install pytest requests
-        echo "
-import requests
-
+        echo "import requests
 def test_ngrok_access():
     url = '${{ env.NGROK_URL }}'
     r = requests.get(url)
-    assert r.status_code == 200
-" > test_api.py
+    assert r.status_code == 200" > test_api.py
         pytest test_api.py
 
-    - name: ⏳ Attente de 120 secondes pour accéder manuellement à l'URL
+    - name: ⏳ Attente de 120 secondes pour accès manuel
       run: sleep 120
