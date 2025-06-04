@@ -51,6 +51,9 @@ def max_valeurs(valeurs):
             max_val = val
 
     return f"<h2>Les valeurs saisies sont : {liste_valeurs}</h2><h3>La valeur la plus grande est : {max_val}</h3>"
+@app.route('/cv')
+def cv():
+    return render_template('cv.html')
 
                                                                                                                
 if __name__ == "__main__":
